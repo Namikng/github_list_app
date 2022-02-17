@@ -5,7 +5,22 @@ void main() {
   runApp(MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  var userInfo;
+  String userName = '';
+  String userAvatarUrl = '';
+
+  @override
+  void initState() {
+    super.initState();
+    updateUserUI();
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -21,11 +36,17 @@ class MyApp extends StatelessWidget {
               child: Row(
                 children: [
                   Expanded(
-                    child: Icon(Icons.icecream),
+                    child: Image.network(userAvatarUrl),
                     flex: 3,
                   ),
                   Expanded(
-                    child: Text('User name'),
+                    child: Text(
+                      userName,
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 20.0,
+                      ),
+                    ),
                     flex: 7,
                   ),
                 ],
@@ -36,6 +57,25 @@ class MyApp extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  void updateUserUI() async {
+    userInfo = await getUserInfo('jakewharton');
+    print(userInfo['name']);
+    setState(() {
+      if (userInfo == null) {
+        userName = '';
+      }
+      userName = userInfo['name'];
+      userAvatarUrl = userInfo['avatar_url'];
+    });
+  }
+
+  Future<dynamic> getUserInfo(String userName) async {
+    NetworkHelper networkHelper =
+        NetworkHelper('https://api.github.com/users/$userName');
+    var userInfo = await networkHelper.getData();
+    return userInfo;
   }
 }
 
@@ -53,10 +93,8 @@ class _RepoInfoState extends State<RepoInfo> {
   @override
   void initState() {
     super.initState();
-    var userInfo = getUserInfo('jakewharton');
-
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -95,16 +133,9 @@ class _RepoInfoState extends State<RepoInfo> {
     );
   }
 
-  Future<dynamic> getUserInfo(String userName) async {
-    NetworkHelper networkHelper =
-        NetworkHelper('https://api.github.com/users/:$userName');
-    var userInfo = await networkHelper.getData();
-    return userInfo;
-  }
-
   Future<dynamic> getUserRepo(String userName) async {
     NetworkHelper networkHelper =
-    NetworkHelper('https://api.github.com/users/:$userName/repos');
+        NetworkHelper('https://api.github.com/users/$userName/repos');
     var reposInfo = await networkHelper.getData();
     return reposInfo;
   }
